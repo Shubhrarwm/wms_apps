@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Oracle WMS — Receiving Form</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d1117; --surface:#161b22; --surface2:#1c2330; --border:#2d3748;
+  --accent:#f97316; --accent2:#fb923c; --text:#e2e8f0; --text-muted:#8b949e;
+  --text-dim:#4a5568; --success:#22c55e; --error:#ef4444; --warning:#eab308;
+  --input-bg:#0d1117; --radius:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
+.header-logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;}
+.header-sep{width:1px;height:20px;background:var(--border);}
+.header-title{font-size:13px;color:var(--text-muted);font-weight:400;letter-spacing:.02em;}
+.header-status{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--text-dim);transition:background .3s;}
+.status-dot.connected{background:var(--success);box-shadow:0 0 6px var(--success);}
+.status-dot.error{background:var(--error);}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* LEFT PANEL */
+.left-panel{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;gap:14px;overflow-y:auto;}
+.panel-section-title{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);padding-bottom:10px;border-bottom:1px solid var(--border);}
+.field-group{display:flex;flex-direction:column;gap:4px;}
+.field-label{font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;}
+
+/* INPUTS */
+input,select,textarea{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:8px 10px;width:100%;outline:none;transition:border-color .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+input[readonly],textarea[readonly]{color:var(--text-muted);cursor:default;background:var(--surface2);}
+input::placeholder,textarea::placeholder{color:var(--text-dim);}
+select option{background:var(--surface);}
+
+/* CONNECT BTN */
+.connect-btn{background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer;width:100%;transition:background .2s,transform .1s;margin-top:4px;}
+.connect-btn:hover{background:var(--accent2);}
+.connect-btn:active{transform:scale(.98);}
+.connect-btn:disabled{background:var(--border);color:var(--text-dim);cursor:not-allowed;transform:none;}
+
+/* FACILITY BADGE */
+.facility-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);display:flex;justify-content:space-between;align-items:center;}
+.facility-id-label{font-size:10px;color:var(--text-dim);}
+
+/* MSG BOX */
+.msg-box{font-size:11px;padding:8px 10px;border-radius:var(--radius);border-left:3px solid var(--text-dim);background:var(--surface2);color:var(--text-muted);display:none;}
+.msg-box.show{display:block;}
+.msg-box.success{border-color:var(--success);color:var(--success);}
+.msg-box.error{border-color:var(--error);color:var(--error);}
+.msg-box.info{border-color:var(--accent);color:var(--accent);}
+
+/* MAIN PANEL */
+.main-panel{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;}
+
+/* SECTION CARD */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;}
+.section-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#000;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-title{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
+.section-body{padding:20px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field label{font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;}
+
+/* SPINNER INSIDE SELECT */
+.select-wrap{position:relative;}
+.select-wrap .spin{position:absolute;right:32px;top:50%;transform:translateY(-50%);width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:rspin .7s linear infinite;display:none;}
+.select-wrap.loading .spin{display:block;}
+@keyframes rspin{to{transform:translateY(-50%) rotate(360deg);}}
+
+/* ACTION BAR */
+.action-bar{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--surface2);border-top:1px solid var(--border);flex-wrap:wrap;}
+
+/* BUTTONS */
+.btn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:9px 20px;border-radius:var(--radius);border:none;cursor:pointer;transition:all .2s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover:not(:disabled){background:var(--accent2);}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+.btn-ghost:hover:not(:disabled){border-color:var(--text-muted);color:var(--text);}
+.btn-danger{background:transparent;color:var(--error);border:1px solid var(--error);}
+.btn-danger:hover:not(:disabled){background:var(--error);color:#fff;}
+.btn-print{background:transparent;color:var(--accent);border:1px solid var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 10px;border-radius:var(--radius);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-print:hover{background:rgba(249,115,22,.12);}
+
+/* TABLE */
+.data-table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--surface2);color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:10px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:6px 7px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(249,115,22,.04);}
+td input,td select{padding:5px 7px;font-size:12px;background:var(--input-bg);}
+td input[readonly]{background:var(--surface2);color:var(--text-muted);}
+
+/* LPN cell */
+.lpn-cell{display:flex;align-items:center;gap:6px;}
+.lpn-cell input{min-width:178px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;}
+
+/* ADD ROW */
+.add-row-btn{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:1px dashed var(--accent);border-radius:var(--radius);padding:7px 14px;cursor:pointer;transition:all .2s;margin:12px 20px;width:fit-content;}
+.add-row-btn:hover{background:rgba(249,115,22,.08);}
+
+/* REMOVE ROW */
+.remove-row-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:3px;transition:color .2s;}
+.remove-row-btn:hover{color:var(--error);}
+
+/* OVERLAY */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
+#overlay.show{display:flex;}
+.overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px 32px;text-align:center;min-width:280px;}
+.overlay-box h3{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--text);margin-bottom:8px;}
+.overlay-box p{font-size:13px;color:var(--text-muted);}
+.overlay-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:ospin .8s linear infinite;margin:0 auto 16px;}
+@keyframes ospin{to{transform:rotate(360deg);}}
+
+/* XML PREVIEW MODAL */
+#xmlModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;}
+#xmlModal.show{display:flex;}
+.xml-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:700px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;}
+.xml-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);}
+.xml-modal-title{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;}
+.xml-modal-body{flex:1;overflow:auto;padding:16px 20px;}
+#xmlPreview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a8d8a8;white-space:pre;overflow:auto;max-height:50vh;}
+.xml-modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* SCROLLBARS */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-dim);}
+
+/* MISC */
+.form-disabled{opacity:.45;pointer-events:none;}
+@keyframes rowFlash{from{background:rgba(249,115,22,.18);}to{background:transparent;}}
+.row-flash td{animation:rowFlash .8s ease-out;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <span class="header-logo">Oracle WMS</span>
+  <div class="header-sep"></div>
+  <span class="header-title">Receiving Form — CIMCO Facility</span>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Disconnected</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <aside class="left-panel">
+    <div class="panel-section-title">WMS Connection</div>
+    <div class="field-group">
+      <div class="field-label">User Name</div>
+      <input type="text" id="wmsUser" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Password</div>
+      <input type="password" id="wmsPassword" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Facility Code</div>
+      <input type="text" id="facilityCode" value="CIMCO" readonly/>
+    </div>
+    <button class="connect-btn" id="connectBtn" onclick="connectToWMS()">Connect</button>
+    <div class="msg-box" id="connMsg"></div>
+    <div style="display:none" id="facilityInfo">
+      <div class="panel-section-title" style="margin-top:4px">Facility Info</div>
+      <div class="facility-badge">
+        <div><div class="facility-id-label">Facility ID</div><div id="facilityIdDisplay">—</div></div>
+        <div style="text-align:right"><div class="facility-id-label">Code</div><div>CIMCO</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <main class="main-panel">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — SHIPMENT INFORMATION
+    ══════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <span class="section-title">Shipment Information</span>
+      </div>
+      <div class="section-body form-disabled" id="section1Body">
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label>PO Number *</label>
+            <div class="select-wrap" id="poSelectWrap">
+              <select id="poSelect" onchange="onPOChange()">
+                <option value="">— Connect to load POs —</option>
+              </select>
+              <div class="spin"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>PO Status</label>
+            <input type="text" id="poStatus" readonly placeholder="Auto-filled"/>
+          </div>
+
+          <div class="form-field">
+            <label>Vendor</label>
+            <input type="text" id="poSupplier" readonly placeholder="Auto-filled"/>
+          </div>
+
+          <div class="form-field">
+            <label>Shipment Number *</label>
+            <input type="text" id="shipmentNum" placeholder="Enter shipment #"/>
+          </div>
+
+          <div class="form-field">
+            <label>Receipt Date</label>
+            <input type="date" id="receiptDate"/>
+          </div>
+
+          <div class="form-field">
+            <label>Carrier</label>
+            <input type="text" id="carrier" placeholder="e.g. FedEx, UPS"/>
+          </div>
+
+          <div class="form-field">
+            <label>Tracking / BOL #</label>
+            <input type="text" id="trackingNum" placeholder="Tracking or BOL number"/>
+          </div>
+
+          <div class="form-field">
+            <label>Origin of Shipment</label>
+            <input type="text" id="originShipment" placeholder="e.g. Chicago, IL"/>
+          </div>
+
+          <div class="form-field">
+            <label>Printer</label>
+            <div class="select-wrap" id="printerSelectWrap">
+              <select id="printerSelect">
+                <option value="">— Connect to load —</option>
+              </select>
+              <div class="spin"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — RECEIVE LPNs
+    ══════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <span class="section-title">Receive LPNs</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;">One LPN per row</span>
+      </div>
+      <div class="form-disabled" id="section2Body" style="padding:0">
+        <div class="data-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:26px">#</th>
+                <th style="min-width:190px">Item</th>
+                <th style="min-width:72px">UOM</th>
+                <th style="min-width:130px">Packaging Type</th>
+                <th style="min-width:130px">WMS OBLPN Type</th>
+                <th style="min-width:76px">Tare Wt</th>
+                <th style="min-width:82px">Gross Wt</th>
+                <th style="min-width:82px">Net Wt</th>
+                <th style="min-width:260px">LPN</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="lpnBody">
+              <!-- rows added by JS -->
+            </tbody>
+          </table>
+        </div>
+        <button class="add-row-btn" id="addLpnBtn" onclick="addLpnRow()">＋ Add LPN Row</button>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="submitBtn" disabled onclick="submitReceipt()">Submit Receipt</button>
+        <button class="btn btn-ghost"   id="clearBtn"  disabled onclick="clearForm()">Clear Form</button>
+        <button class="btn btn-danger"  id="cancelBtn" disabled onclick="cancelReceipt()">Cancel</button>
+        <div id="submitMsg" class="msg-box" style="margin-left:auto;margin-bottom:0"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-spinner"></div>
+    <h3 id="overlayTitle">Loading…</h3>
+    <p id="overlayMsg">Please wait</p>
+  </div>
+</div>
+
+<!-- XML PREVIEW MODAL -->
+<div id="xmlModal">
+  <div class="xml-modal-box">
+    <div class="xml-modal-header">
+      <span class="xml-modal-title">📄 Generated XML — IB Shipment</span>
+      <button class="remove-row-btn" onclick="closeXmlModal()" title="Close" style="font-size:20px">×</button>
+    </div>
+    <div class="xml-modal-body">
+      <div id="submitMsg2" class="msg-box" style="margin-bottom:12px"></div>
+      <pre id="xmlPreview"></pre>
+    </div>
+    <div class="xml-modal-footer">
+      <button class="btn btn-ghost" onclick="copyXml()">📋 Copy XML</button>
+      <button class="btn btn-primary" id="confirmSubmitBtn" onclick="doPostXml()">Send to WMS</button>
+      <button class="btn btn-danger" onclick="closeXmlModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const BASE_URL       = 'https://ta38.wms.ocs.oraclecloud.com:443/redwoodmaterials_test';
+const PUSH_URL       = `${BASE_URL}/wms/api/init_stage_interface/`;
+
+let facilityId       = null;
+let authHeader       = null;
+let currentPOId      = null;
+let currentVendorKey = null;
+let lpnRowCounter    = 0;
+let pendingXmlData   = null;   // holds built XML until user confirms Send
+
+// Cached PO item list: {value(code), label, uomKey, unitWeight, desc, partA}
+let poItemCache      = [];
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function showOverlay(t,m){ $('overlayTitle').textContent=t; $('overlayMsg').textContent=m; $('overlay').classList.add('show'); }
+function hideOverlay(){ $('overlay').classList.remove('show'); }
+
+function showMsg(id,text,type){ const el=$(id); el.textContent=text; el.className=`msg-box show ${type}`; }
+
+function setStatus(ok,text){
+  $('statusDot').className='status-dot'+(ok===true?' connected':ok===false?' error':'');
+  $('statusText').textContent=text;
+}
+
+function enableForm(){
+  ['section1Body','section2Body'].forEach(id=>$(id).classList.remove('form-disabled'));
+  $('submitBtn').disabled=$('clearBtn').disabled=$('cancelBtn').disabled=false;
+}
+
+function getResults(d){
+  return Array.isArray(d)?d:Array.isArray(d.results)?d.results:Array.isArray(d.data)?d.data:[];
+}
+
+async function wmsGet(path){
+  const r=await fetch(`${BASE_URL}${path}`,{
+    headers:{'Authorization':authHeader,'Content-Type':'application/json','Accept':'application/json'}
+  });
+  if(!r.ok){const t=await r.text();throw new Error(`HTTP ${r.status}: ${t}`);}
+  return r.json();
+}
+
+async function wmsGetUrl(url){
+  const r=await fetch(url,{
+    headers:{'Authorization':authHeader,'Content-Type':'application/json','Accept':'application/json'}
+  });
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+function xmlEsc(v){ return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function todayISO(){
+  const d=new Date(); const pad=v=>String(v).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function todayMMDDYYYY(){
+  const d=new Date(); const pad=v=>String(v).padStart(2,'0');
+  return `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()}`;
+}
+
+// ═══════════════════════════════════════════════════
+// LPN TIMESTAMP
+// ═══════════════════════════════════════════════════
+function generateLPN(){
+  const n=new Date(); const pad=v=>String(v).padStart(2,'0');
+  return 'CIMCOR'+n.getFullYear()+pad(n.getMonth()+1)+pad(n.getDate())+pad(n.getHours())+pad(n.getMinutes())+pad(n.getSeconds());
+}
+
+// ═══════════════════════════════════════════════════
+// CONNECT
+// ═══════════════════════════════════════════════════
+async function connectToWMS(){
+  const user=$('wmsUser').value.trim();
+  const pass=$('wmsPassword').value;
+  if(!user||!pass){showMsg('connMsg','Please enter username and password.','error');return;}
+
+  authHeader='Basic '+btoa(`${user}:${pass}`);
+  const btn=$('connectBtn');
+  btn.disabled=true; btn.textContent='Connecting…';
+  setStatus(null,'Connecting…');
+
+  try{
+    showOverlay('Connecting to WMS','Fetching facility information…');
+    const facData=await wmsGet('/wms/lgfapi/v10/entity/facility?code=CIMCO');
+    const facArr=getResults(facData);
+    const facObj=facArr.length?facArr[0]:facData;
+    facilityId=facObj?.id||facObj?.facility_id;
+    if(!facilityId) throw new Error('Could not extract facility_id.');
+
+    $('facilityIdDisplay').textContent=facilityId;
+    $('facilityInfo').style.display='block';
+
+    showOverlay('Loading Purchase Orders',`Fetching POs…`);
+    await loadPOs();
+
+    showOverlay('Loading Printers','Fetching printer list…');
+    await loadPrinters();
+
+    hideOverlay();
+    setStatus(true,'Connected · CIMCO');
+    showMsg('connMsg',`Connected — Facility ID: ${facilityId}`,'success');
+    enableForm();
+
+    btn.textContent='Reconnect'; btn.disabled=false;
+    $('receiptDate').value=todayISO();
+    renderLpnTable([]);
+
+  }catch(err){
+    hideOverlay(); setStatus(false,'Connection Failed');
+    showMsg('connMsg','Error: '+err.message,'error');
+    btn.disabled=false; btn.textContent='Retry';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// LOAD POs
+// ═══════════════════════════════════════════════════
+async function loadPOs(){
+  $('poSelectWrap').classList.add('loading');
+  const data=await wmsGet(`/wms/lgfapi/v10/entity/purchase_order_hdr?facility_id=${facilityId}`);
+  const rows=getResults(data);
+  const sel=$('poSelect');
+  sel.innerHTML='<option value="">— Select a PO —</option>';
+  rows.forEach(po=>{
+    const opt=document.createElement('option');
+    opt.value=po.po_nbr||po.po_number||po.code||String(po.id);
+    opt.textContent=opt.value;
+    opt.dataset.po=JSON.stringify(po);
+    sel.appendChild(opt);
+  });
+  $('poSelectWrap').classList.remove('loading');
+}
+
+// ═══════════════════════════════════════════════════
+// LOAD PRINTERS
+// ═══════════════════════════════════════════════════
+async function loadPrinters(){
+  $('printerSelectWrap').classList.add('loading');
+  try{
+    const data=await wmsGet(`/wms/lgfapi/v10/entity/printer?facility_id=${facilityId}`);
+    const printers=getResults(data);
+    const sel=$('printerSelect');
+    sel.innerHTML='<option value="">— Select printer —</option>';
+    printers.forEach(p=>{
+      const opt=document.createElement('option');
+      opt.value=p.id||p.printer_name;
+      opt.textContent=p.printer_name||p.name||String(p.id);
+      sel.appendChild(opt);
+    });
+  }catch(e){console.warn('Printers:',e.message);}
+  $('printerSelectWrap').classList.remove('loading');
+}
+
+// ═══════════════════════════════════════════════════
+// ON PO CHANGE
+// ═══════════════════════════════════════════════════
+async function onPOChange(){
+  const sel=$('poSelect');
+  const opt=sel.options[sel.selectedIndex];
+
+  currentPOId=currentVendorKey=null;
+  poItemCache=[];
+  pkgCacheKey=null; pkgCacheOptions=[];
+  $('poStatus').value=$('poSupplier').value='';
+  renderLpnTable([]);
+
+  if(!opt?.dataset?.po) return;
+  let po; try{po=JSON.parse(opt.dataset.po);}catch(e){return;}
+
+  currentPOId=po.id||po.purchase_order_id||null;
+  currentVendorKey=po.vendor_id?.key||po.vendor_id?.id||po.vendor?.key||po.vendor?.id||null;
+  $('poStatus').value=po.status||po.po_status||'';
+
+  const vendorUrl=po.vendor_id?.url||po.vendor?.url||null;
+  if(vendorUrl){
+    $('poSupplier').value='Loading…';
+    try{
+      const vd=await wmsGetUrl(vendorUrl);
+      $('poSupplier').value=vd.name||vd.vendor_name||vd.supplier_name||String(currentVendorKey||'');
+    }catch(e){$('poSupplier').value=String(currentVendorKey||'');}
+  }else{
+    $('poSupplier').value=po.vendor_id?.name||po.supplier_code||po.vendor_code||po.supplier||'';
+  }
+
+  if(currentPOId) await loadPOItemCache(currentPOId);
+  renderLpnTable([]);
+}
+
+// ═══════════════════════════════════════════════════
+// LOAD PO ITEM CACHE
+// Fetches purchase_order_dtl → item_id.url → code, description,
+// primary_uom_id.key, unit_weight, part_a (from item_description.part_a)
+// ═══════════════════════════════════════════════════
+async function loadPOItemCache(poId){
+  showOverlay('Loading PO Items','Fetching item details…');
+  try{
+    const data=await wmsGet(`/wms/lgfapi/v10/entity/purchase_order_dtl?purchase_order_id=${poId}`);
+    const lines=getResults(data);
+    const enriched=await Promise.all(lines.map(async line=>{
+      let code='',desc='',uomKey='',unitWeight='',partA='';
+      const itemUrl=line.item_id?.url||null;
+      if(itemUrl){
+        try{
+          const iData=await wmsGetUrl(itemUrl);
+          code       =iData.code||iData.item_code||'';
+          desc       =iData.description||iData.item_description||'';
+          unitWeight =iData.unit_weight!=null?String(iData.unit_weight):'';
+          uomKey     =iData.primary_uom_id?.key||iData.primary_uom_id?.uom||iData.uom||'';
+          partA      =iData.item_description?.part_a||iData.part_a||'';
+        }catch(e){}
+      }
+      return {
+        value: code,
+        label: code&&desc?`${code} \u2194 ${desc}`:code||String(line.id||''),
+        desc, uomKey, unitWeight, partA
+      };
+    }));
+    poItemCache=enriched.filter(e=>e.value);
+  }catch(e){ console.warn('PO item cache:',e.message); poItemCache=[]; }
+  hideOverlay();
+}
+
+// ═══════════════════════════════════════════════════
+// PACKAGING TYPE CACHE  — { partA, unitWeight, desc2 }
+// desc2 = description_2  → shown in WMS_OBLPN_TYPE column
+// ═══════════════════════════════════════════════════
+let pkgCacheKey=null, pkgCacheOptions=[];
+
+async function getPackagingOptions(){
+  if(!currentVendorKey) return [];
+  if(pkgCacheKey===currentVendorKey) return pkgCacheOptions;
+  try{
+    const data=await wmsGet(`/wms/lgfapi/v10/entity/item?part_b=${currentVendorKey}`);
+    const items=getResults(data);
+    const seen=new Set();
+    pkgCacheOptions=[];
+    items.forEach(it=>{
+      const partA=it.item_description?.part_a||it.part_a||'';
+      const wt   =it.unit_weight!=null?String(it.unit_weight):'';
+      const desc2=it.description_2||'';
+      if(partA&&!seen.has(partA)){
+        seen.add(partA);
+        pkgCacheOptions.push({partA, unitWeight:wt, desc2});
+      }
+    });
+    pkgCacheKey=currentVendorKey;
+  }catch(e){ pkgCacheOptions=[]; }
+  return pkgCacheOptions;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER / BUILD LPN TABLE
+// ═══════════════════════════════════════════════════
+function renderLpnTable(rows){
+  const tbody=$('lpnBody');
+  tbody.innerHTML='';
+  lpnRowCounter=0;
+  if(!rows||rows.length===0){ addLpnRow(); return; }
+  rows.forEach(()=>{ lpnRowCounter++; tbody.appendChild(buildLpnRow(lpnRowCounter,{})); });
+}
+
+function addLpnRow(){
+  lpnRowCounter++;
+  const tr=buildLpnRow(lpnRowCounter,{});
+  $('lpnBody').appendChild(tr);
+  tr.classList.add('row-flash');
+  setTimeout(()=>tr.classList.remove('row-flash'),900);
+}
+
+function buildLpnRow(n, d){
+  const tr=document.createElement('tr');
+  tr.dataset.row=n;
+
+  // ① Row #
+  const tdN=cell();
+  tdN.style.cssText='color:var(--text-dim);font-family:"IBM Plex Mono",monospace;font-size:11px;min-width:26px;';
+  tdN.textContent=n;
+
+  // ② Item LOV
+  const itemSel=mk('select'); itemSel.style.width='185px'; itemSel.className='lpn-item-sel';
+  addOpt(itemSel,'','— Select item —');
+  poItemCache.forEach(itm=>{
+    const o=addOpt(itemSel,itm.value,itm.label);
+    o.dataset.uomKey     =itm.uomKey     ||'';
+    o.dataset.unitWeight =itm.unitWeight ||'';
+    o.dataset.desc       =itm.desc       ||'';
+    o.dataset.partA      =itm.partA      ||'';  // store part_a for XML
+  });
+  if(d.itemCode){
+    for(const o of itemSel.options){ if(o.value===d.itemCode){o.selected=true;break;} }
+  }
+  itemSel.addEventListener('change',()=>onLpnItemChange(tr,itemSel));
+  const tdItem=cell(); tdItem.appendChild(itemSel);
+
+  // ③ UOM (readonly)
+  const uomIn=mk('input'); uomIn.type='text'; uomIn.readOnly=true;
+  uomIn.style.width='68px'; uomIn.className='lpn-uom';
+  uomIn.placeholder='Auto'; uomIn.value=d.uomKey||'';
+  const tdUOM=cell(); tdUOM.appendChild(uomIn);
+
+  // ④ Packaging Type
+  const pkgSel=mk('select'); pkgSel.style.width='124px'; pkgSel.className='lpn-pkg-sel';
+  addOpt(pkgSel,'',currentVendorKey?'Loading…':'— Select PO —');
+  pkgSel.addEventListener('change',()=>onLpnPkgChange(tr,pkgSel));
+  const tdPkg=cell(); tdPkg.appendChild(pkgSel);
+
+  // ⑤ WMS OBLPN Type (readonly — description_2 from packaging type)
+  const oblpnIn=mk('input'); oblpnIn.type='text'; oblpnIn.readOnly=true;
+  oblpnIn.style.width='124px'; oblpnIn.className='lpn-oblpn';
+  oblpnIn.placeholder='Auto-filled'; oblpnIn.value=d.desc2||'';
+  const tdOblpn=cell(); tdOblpn.appendChild(oblpnIn);
+
+  // ⑥ Tare Wt (editable, pre-filled from pkg unit_weight)
+  const tareIn=mk('input'); tareIn.type='number'; tareIn.step='0.0001'; tareIn.min='0';
+  tareIn.style.width='74px'; tareIn.className='lpn-tare';
+  tareIn.placeholder='0'; tareIn.value=d.unitWeight||'';
+  tareIn.addEventListener('input',()=>recalcLpnNet(tr));
+  const tdTare=cell(); tdTare.appendChild(tareIn);
+
+  // ⑦ Gross Wt (user entry)
+  const grossIn=mk('input'); grossIn.type='number'; grossIn.step='0.0001'; grossIn.min='0';
+  grossIn.style.width='80px'; grossIn.className='lpn-gross'; grossIn.placeholder='0';
+  grossIn.addEventListener('input',()=>recalcLpnNet(tr));
+  const tdGross=cell(); tdGross.appendChild(grossIn);
+
+  // ⑧ Net Wt (readonly, Gross − Tare)
+  const netIn=mk('input'); netIn.type='number'; netIn.readOnly=true;
+  netIn.style.width='80px'; netIn.className='lpn-net';
+  netIn.placeholder='—'; netIn.title='Net Wt = Gross Wt − Tare Wt';
+  const tdNet=cell(); tdNet.appendChild(netIn);
+
+  // ⑨ LPN + Print Label
+  const lpnIn=mk('input'); lpnIn.type='text'; lpnIn.className='lpn-number';
+  lpnIn.style.cssText='min-width:176px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.04em;';
+  lpnIn.value=generateLPN(); lpnIn.title='Auto-generated. You may override.';
+
+  const printBtn=mk('button'); printBtn.className='btn-print'; printBtn.type='button';
+  printBtn.textContent='🖨 Print Label';
+  printBtn.addEventListener('click',()=>printLpnLabel(tr));
+
+  const lpnWrap=mk('div'); lpnWrap.className='lpn-cell';
+  lpnWrap.appendChild(lpnIn); lpnWrap.appendChild(printBtn);
+  const tdLPN=cell(); tdLPN.appendChild(lpnWrap);
+
+  // ⑩ Remove
+  const delBtn=mk('button'); delBtn.className='remove-row-btn'; delBtn.title='Remove row'; delBtn.textContent='×';
+  delBtn.addEventListener('click',()=>removeLpnRow(tr));
+  const tdDel=cell(); tdDel.appendChild(delBtn);
+
+  tr.append(tdN, tdItem, tdUOM, tdPkg, tdOblpn, tdTare, tdGross, tdNet, tdLPN, tdDel);
+
+  // Populate packaging options async
+  populatePkgSelect(tr, pkgSel, d.partAHint||'');
+
+  return tr;
+}
+
+// helpers
+function mk(tag){return document.createElement(tag);}
+function cell(){return document.createElement('td');}
+function addOpt(sel,v,l){const o=mk('option');o.value=v;o.textContent=l;sel.appendChild(o);return o;}
+
+async function populatePkgSelect(rowEl, pkgSel, hint){
+  const opts=await getPackagingOptions();
+  pkgSel.innerHTML='<option value="">— Select type —</option>';
+  opts.forEach(({partA,unitWeight,desc2})=>{
+    const o=addOpt(pkgSel,partA,partA);
+    o.dataset.unitWeight=unitWeight||'';
+    o.dataset.desc2     =desc2     ||'';
+    if(hint&&partA===hint) o.selected=true;
+  });
+  if(pkgSel.options.length===1){pkgSel.innerHTML='<option value="">— None found —</option>';return;}
+  if(hint){
+    const m=opts.find(x=>x.partA===hint);
+    if(m){
+      if(m.unitWeight) rowEl.querySelector('.lpn-tare').value=m.unitWeight;
+      rowEl.querySelector('.lpn-oblpn').value=m.desc2||'';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// ON PKG TYPE CHANGE
+// ═══════════════════════════════════════════════════
+function onLpnPkgChange(rowEl, pkgSel){
+  const opt=pkgSel.options[pkgSel.selectedIndex];
+  const wt  =opt?.dataset?.unitWeight||'';
+  const d2  =opt?.dataset?.desc2     ||'';
+  if(wt) rowEl.querySelector('.lpn-tare').value=wt;
+  rowEl.querySelector('.lpn-oblpn').value=d2;
+  recalcLpnNet(rowEl);
+}
+
+// ═══════════════════════════════════════════════════
+// ON ITEM CHANGE
+// ═══════════════════════════════════════════════════
+async function onLpnItemChange(rowEl, selEl){
+  const opt=selEl.options[selEl.selectedIndex];
+  rowEl.querySelector('.lpn-uom').value  =opt.dataset.uomKey     ||'';
+  rowEl.querySelector('.lpn-tare').value =opt.dataset.unitWeight ||'';
+  recalcLpnNet(rowEl);
+  const pkgSel=rowEl.querySelector('.lpn-pkg-sel');
+  await populatePkgSelect(rowEl, pkgSel, opt.dataset.partA||'');
+}
+
+function recalcLpnNet(rowEl){
+  const g=parseFloat(rowEl.querySelector('.lpn-gross').value)||0;
+  const t=parseFloat(rowEl.querySelector('.lpn-tare').value) ||0;
+  rowEl.querySelector('.lpn-net').value=(g||t)?(g-t).toFixed(4):'';
+}
+
+function removeLpnRow(tr){
+  tr.remove();
+  document.querySelectorAll('#lpnBody tr[data-row]').forEach((r,i)=>r.cells[0].textContent=i+1);
+}
+
+// ═══════════════════════════════════════════════════
+// PRINT LABEL
+// ═══════════════════════════════════════════════════
+function printLpnLabel(rowEl){
+  const lpn    =rowEl.querySelector('.lpn-number')?.value  ||'';
+  const item   =rowEl.querySelector('.lpn-item-sel')?.value||'';
+  const uom    =rowEl.querySelector('.lpn-uom')?.value     ||'';
+  const pkg    =rowEl.querySelector('.lpn-pkg-sel')?.value ||'';
+  const oblpn  =rowEl.querySelector('.lpn-oblpn')?.value   ||'';
+  const tare   =rowEl.querySelector('.lpn-tare')?.value    ||'';
+  const gross  =rowEl.querySelector('.lpn-gross')?.value   ||'';
+  const net    =rowEl.querySelector('.lpn-net')?.value     ||'';
+  const printer=$('printerSelect').options[$('printerSelect').selectedIndex]?.textContent||'(none)';
+  const po     =$('poSelect').value||'';
+  const win=window.open('','_blank','width=520,height=480');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<title>LPN — ${lpn}</title>
+<style>
+body{font-family:'IBM Plex Mono',monospace;background:#fff;color:#000;padding:24px;margin:0;}
+h2{font-size:18px;margin-bottom:4px;} .sub{font-size:12px;color:#555;margin-bottom:20px;}
+table{border-collapse:collapse;width:100%;font-size:13px;}
+td{padding:6px 10px;border:1px solid #ccc;}
+td:first-child{font-weight:600;background:#f5f5f5;width:40%;}
+.lpn-val{font-size:20px;font-weight:700;letter-spacing:.06em;color:#c2410c;}
+.footer{margin-top:20px;font-size:11px;color:#888;}
+@media print{body{padding:0;}}
+</style></head><body>
+<h2>LPN Label</h2><div class="sub">Oracle WMS Cloud — CIMCO Facility</div>
+<table>
+<tr><td>LPN</td><td class="lpn-val">${lpn}</td></tr>
+<tr><td>PO Number</td><td>${po}</td></tr>
+<tr><td>Item</td><td>${item}</td></tr>
+<tr><td>UOM</td><td>${uom}</td></tr>
+<tr><td>Packaging Type</td><td>${pkg}</td></tr>
+<tr><td>WMS OBLPN Type</td><td>${oblpn}</td></tr>
+<tr><td>Tare Weight</td><td>${tare}</td></tr>
+<tr><td>Gross Weight</td><td>${gross}</td></tr>
+<tr><td>Net Weight</td><td>${net}</td></tr>
+<tr><td>Printer</td><td>${printer}</td></tr>
+<tr><td>Printed</td><td>${new Date().toLocaleString()}</td></tr>
+</table>
+<div class="footer">Generated by Oracle WMS Receiving Form</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════════════
+// BUILD XML
+// ═══════════════════════════════════════════════════
+function buildXml(){
+  const shipNum   =xmlEsc($('shipmentNum').value.trim());
+  const vendor    =xmlEsc($('poSupplier').value);
+  const poNum     =xmlEsc($('poSelect').value);
+  const origin    =xmlEsc($('originShipment').value);
+  const shippedDt =todayISO();
+  const today8    =todayMMDDYYYY();
+
+  // Constant header
+  let xml=`<LgfData>
+<Header>
+  <DocumentVersion>26A</DocumentVersion>
+  <OriginSystem>Host</OriginSystem>
+  <ClientEnvCode>PRD</ClientEnvCode>
+  <ParentCompanyCode>REDWOOD_MATERIALS</ParentCompanyCode>
+  <Entity>ib_shipment</Entity>
+  <TimeStamp>${new Date().toISOString().replace(/\.\d+Z$/,'')}</TimeStamp>
+  <MessageId>InboundShipment</MessageId>
+</Header>
+<ListOfIbShipments>
+<ib_shipment>
+<ib_shipment_hdr>
+  <shipment_nbr>${shipNum}</shipment_nbr>
+  <facility_code>CIMCO</facility_code>
+  <company_code>REDWOOD_MATERIALS</company_code>
+  <trailer_nbr/>
+  <action_code>CREATE</action_code>
+  <ref_nbr/>
+  <shipment_type/>
+  <load_nbr/>
+  <manifest_nbr/>
+  <trailer_type/>
+  <vendor_info/>
+  <origin_info/>
+  <origin_code/>
+  <orig_shipped_units/>
+  <lock_code/>
+  <shipped_date>${shippedDt}</shipped_date>
+  <orig_shipped_lpns/>
+  <cust_field_1/><cust_field_2/><cust_field_3/><cust_field_4/><cust_field_5/>
+  <sold_to_legal_name/>
+  <returned_from_facility_code/>
+  <cust_date_1/><cust_date_2/><cust_date_3/><cust_date_4/><cust_date_5/>
+  <cust_decimal_1/><cust_decimal_2/><cust_decimal_3/><cust_decimal_4/><cust_decimal_5/>
+  <cust_number_1/><cust_number_2/><cust_number_3/><cust_number_4/><cust_number_5/>
+  <cust_long_text_1/><cust_long_text_2/><cust_long_text_3/>
+  <cust_short_text_1/><cust_short_text_2/><cust_short_text_3/><cust_short_text_4/>
+  <cust_short_text_5/><cust_short_text_6/><cust_short_text_7/><cust_short_text_8/>
+  <cust_short_text_9/><cust_short_text_10/><cust_short_text_11/><cust_short_text_12/>
+</ib_shipment_hdr>
+`;
+
+  // One <ib_shipment_dtl> per LPN row
+  let seq=0;
+  document.querySelectorAll('#lpnBody tr[data-row]').forEach(row=>{
+    seq++;
+    const itemSel  =row.querySelector('.lpn-item-sel');
+    const selOpt   =itemSel?.options[itemSel?.selectedIndex];
+    const partA    =xmlEsc(selOpt?.dataset?.partA||'');
+    const lpn      =xmlEsc(row.querySelector('.lpn-number')?.value  ||'');
+    const netWt    =xmlEsc(row.querySelector('.lpn-net')?.value     ||'');
+    const tareWt   =xmlEsc(row.querySelector('.lpn-tare')?.value    ||'');
+    const oblpn    =xmlEsc(row.querySelector('.lpn-oblpn')?.value   ||'');
+
+    xml+=`<ib_shipment_dtl>
+  <seq_nbr>${seq}</seq_nbr>
+  <action_code>CREATE</action_code>
+  <lpn_nbr>${lpn}</lpn_nbr>
+  <lpn_weight/>
+  <lpn_volume/>
+  <item_alternate_code/>
+  <item_part_a>${partA}</item_part_a>
+  <item_part_b/>
+  <item_part_c/>
+  <item_part_d/>
+  <item_part_e/>
+  <item_part_f/>
+  <pre_pack_code/>
+  <pre_pack_ratio/>
+  <pre_pack_total_units/>
+  <invn_attr_a>${xmlEsc(vendor)}</invn_attr_a>
+  <invn_attr_b>${xmlEsc(poNum)}</invn_attr_b>
+  <invn_attr_c>${xmlEsc(origin)}</invn_attr_c>
+  <shipped_qty>${netWt}</shipped_qty>
+  <priority_date/>
+  <po_nbr>${xmlEsc(poNum)}</po_nbr>
+  <pallet_nbr/>
+  <putaway_type/>
+  <expiry_date/>
+  <batch_nbr/>
+  <recv_xdock_facility_code/>
+  <cust_field_1/><cust_field_2/><cust_field_3/><cust_field_4/><cust_field_5/>
+  <lpn_is_physical_pallet_flg/>
+  <po_seq_nbr/>
+  <pre_pack_ratio_seq/>
+  <lpn_lock_code/>
+  <item_barcode/>
+  <uom/>
+  <lpn_length/>
+  <lpn_width/>
+  <lpn_height/>
+  <dtl_rcv_flg/>
+  <invn_attr_d>${tareWt}</invn_attr_d>
+  <invn_attr_e/>
+  <invn_attr_f/>
+  <invn_attr_g/>
+  <receipt_advice_line/>
+  <invn_attr_h>${today8}</invn_attr_h>
+  <invn_attr_i/>
+  <invn_attr_j/>
+  <invn_attr_k/>
+  <invn_attr_l/>
+  <invn_attr_m/>
+  <invn_attr_n/>
+  <invn_attr_o/>
+  <cust_date_1/><cust_date_2/><cust_date_3/><cust_date_4/><cust_date_5/>
+  <cust_decimal_1/><cust_decimal_2/><cust_decimal_3/><cust_decimal_4/><cust_decimal_5/>
+  <cust_number_1/><cust_number_2/><cust_number_3/><cust_number_4/><cust_number_5/>
+  <cust_long_text_1/><cust_long_text_2/><cust_long_text_3/>
+  <cust_short_text_1/><cust_short_text_2/><cust_short_text_3/><cust_short_text_4/>
+  <cust_short_text_5/><cust_short_text_6/><cust_short_text_7/><cust_short_text_8/>
+  <cust_short_text_9/><cust_short_text_10/><cust_short_text_11/><cust_short_text_12/>
+  <uom_code/>
+  <weight_uom_code/>
+  <volume_uom_code/>
+  <dimension_uom_code/>
+  <lpn_type>${oblpn}</lpn_type>
+  <line_schedule_nbrs/>
+  <marked_for_qc_flg/>
+  <warning_percentage/>
+  <error_percentage/>
+  <expensed_destination_flg/>
+  <requestor_name/>
+  <requestor_address/>
+</ib_shipment_dtl>
+`;
+  });
+
+  xml+=`</ib_shipment>
+</ListOfIbShipments>
+</LgfData>`;
+
+  return xml;
+}
+
+// ═══════════════════════════════════════════════════
+// SUBMIT — build XML, show preview modal
+// ═══════════════════════════════════════════════════
+function submitReceipt(){
+  if(!$('poSelect').value){showMsg('submitMsg','Please select a PO.','error');return;}
+  if(!$('shipmentNum').value.trim()){showMsg('submitMsg','Please enter a Shipment Number.','error');return;}
+
+  const rows=document.querySelectorAll('#lpnBody tr[data-row]');
+  if(rows.length===0){showMsg('submitMsg','Add at least one LPN row.','error');return;}
+
+  let hasItem=false;
+  rows.forEach(r=>{if(r.querySelector('.lpn-item-sel')?.value) hasItem=true;});
+  if(!hasItem){showMsg('submitMsg','Please select an item on at least one LPN row.','error');return;}
+
+  pendingXmlData=buildXml();
+  $('xmlPreview').textContent=pendingXmlData;
+  $('submitMsg2').className='msg-box';   // clear any old msg
+  $('xmlModal').classList.add('show');
+}
+
+function closeXmlModal(){
+  $('xmlModal').classList.remove('show');
+  pendingXmlData=null;
+}
+
+function copyXml(){
+  if(!pendingXmlData) return;
+  navigator.clipboard.writeText(pendingXmlData)
+    .then(()=>showMsg('submitMsg2','✓ XML copied to clipboard.','success'))
+    .catch(()=>showMsg('submitMsg2','Copy failed — select and copy manually.','error'));
+}
+
+// ═══════════════════════════════════════════════════
+// POST XML TO WMS
+// ═══════════════════════════════════════════════════
+async function doPostXml(){
+  if(!pendingXmlData) return;
+  const btn=$('confirmSubmitBtn');
+  btn.disabled=true; btn.textContent='Sending…';
+  showMsg('submitMsg2','Posting to Oracle WMS Cloud…','info');
+
+  try{
+    const formBody=new URLSearchParams({
+      async:        'False',
+      validate_xml: 'True',
+      entity:       'ib_shipment',
+      xml_data:     pendingXmlData
+    });
+
+    const r=await fetch(PUSH_URL,{
+      method:  'POST',
+      headers: {
+        'Authorization':  authHeader,
+        'Content-Type':   'application/x-www-form-urlencoded',
+        'Accept':         'application/xml'
+      },
+      body: formBody
+    });
+
+    const respText=await r.text();
+    if(r.ok){
+      showMsg('submitMsg2','✓ Shipment submitted successfully.','success');
+      showMsg('submitMsg','✓ IB Shipment submitted to WMS.','success');
+      btn.textContent='Sent ✓';
+    } else {
+      showMsg('submitMsg2',`Error ${r.status}: ${respText.substring(0,300)}`,'error');
+      btn.disabled=false; btn.textContent='Send to WMS';
+    }
+  }catch(e){
+    showMsg('submitMsg2','Network error: '+e.message,'error');
+    btn.disabled=false; btn.textContent='Send to WMS';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// CLEAR / CANCEL
+// ═══════════════════════════════════════════════════
+function clearForm(){
+  $('poSelect').value='';
+  currentPOId=currentVendorKey=null; poItemCache=[]; pkgCacheKey=null; pkgCacheOptions=[];
+  ['poStatus','poSupplier','shipmentNum','carrier','trackingNum','originShipment']
+    .forEach(id=>$(id).value='');
+  $('receiptDate').value=todayISO();
+  lpnRowCounter=0; $('lpnBody').innerHTML=''; addLpnRow();
+  $('submitMsg').className='msg-box';
+}
+
+function cancelReceipt(){ if(confirm('Cancel and clear this receipt form?')) clearForm(); }
+</script>
+</body>
+</html>
